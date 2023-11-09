@@ -1,0 +1,1 @@
+INSERT INTO tb_user(ativo,registro,cl_name,cl_login,cl_password) VALUES (true, now(), 'Anderson', 'Alguma coisa', 'Coisa Alguma');
