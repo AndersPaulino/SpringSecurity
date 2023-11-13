@@ -1,8 +1,14 @@
 package br.com.uniamerica.aulasecurity.app.security;
 
+import br.com.uniamerica.aulasecurity.app.ApplicationContextLoad;
+import br.com.uniamerica.aulasecurity.app.entity.User;
+import br.com.uniamerica.aulasecurity.app.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +48,40 @@ public class JWTTokenAutenticationService {
         response.getWriter().write("{\"Autorization\": \"" + token + "\"}"); /*Retorna o cabeçalho e o corpo da resposta, usado para ver no postman para teste*/
 
     }
+
+    /*Metodo que retorna o usuário validado com token ou caso não seja válido retorna null*/
+    public Authentication getAuthentication(HttpServletRequest request, HttpServletResponse response){
+        String token = request.getHeader(HEADER_STRING);
+
+        if (token != null){
+            /*Remove o prefixo Bearer, e com o trim remove os espaços*/
+            String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
+
+            /*Faz a validação do token do usuário na requisição e obtem o USER*/
+            String user = Jwts.parser()/*Conversão*/
+                    .setSigningKey(SECRET)
+                    .parseClaimsJws(tokenLimpo)
+                    .getBody()
+                    .getSubject();/*Pega o USER*/
+            if (user != null){
+
+                User user1 = ApplicationContextLoad.getApplicationContext()
+                        .getBean(UserRepository.class)
+                        .findByLogin(user);
+                if (user1 != null){
+                    return new UsernamePasswordAuthenticationToken(
+                            user1.getLogin(),
+                            user1.getPassword(),
+                            user1.getAuthorities()
+                    );
+                }
+            }
+        }
+
+        liberacaoCors(response);
+        return null;
+    }
+
     /*Fazendo liberação contra erro de Cors no navegador*/
     public void liberacaoCors(HttpServletResponse response){
         if (response.getHeader("Acess-Control-Allow-Origin") == null){
