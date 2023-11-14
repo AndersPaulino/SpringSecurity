@@ -4,6 +4,7 @@ import br.com.uniamerica.aulasecurity.app.entity.User;
 import br.com.uniamerica.aulasecurity.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,9 +19,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<String> cadastrar(@RequestBody User user) {
         try {
+            // Obtenha o BCryptPasswordEncoder do contexto
+            BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+
+            String encodedPassword = bCryptPasswordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
             userService.cadastrar(user);
             return ResponseEntity.ok().body("Registro cadastrado com sucesso!");
         } catch (IllegalArgumentException e) {
@@ -28,3 +34,4 @@ public class UserController {
         }
     }
 }
+
